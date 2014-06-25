@@ -4,7 +4,7 @@
   "description": "GitHub stateless authentication strategy for Passport.",
   "main": "./lib",
   "scripts": {
-    "test": "mocha"
+    "test": "./node_modules/.bin/mocha"
   },
   "repository": {
     "type": "git",
@@ -26,5 +26,8 @@
   "homepage": "https://github.com/avbel/passport-stateless-github",
   "dependencies": {
     "superagent": "^0.18.0"
+  },
+  "devDependencies": {
+    "mocha": "^1.20.1"
   }
 }
