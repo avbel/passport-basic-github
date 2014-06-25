@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/avbel/passport-stateless-github",
   "dependencies": {
-    "superagent": "^0.18.0"
+    "superagent": "^0.18"
   },
   "devDependencies": {
     "debug": "^1.0.2",

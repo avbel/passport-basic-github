@@ -5,6 +5,9 @@ var CLIENT_ID     = "mock_client_id";
 var CLIENT_SECRET = "mock_client_secret";
 var CLIENT_TOKEN  = (new Buffer(CLIENT_ID + ":" + CLIENT_SECRET)).toString("base64");
 var TOKEN = "token";
+var USERNAME = "user";
+var PASSWORD = "password";
+var HASH = (new Buffer(USERNAME + ":" + PASSWORD)).toString("base64");
 
 describe("StatelessGithubStrategy tests", function(){
   describe("Constructor", function(){
@@ -47,7 +50,6 @@ describe("StatelessGithubStrategy tests", function(){
       result = null;
       strategy = new Strategy({clientId: CLIENT_ID, clientSecret: CLIENT_SECRET});
       strategy.fail = function(err){
-        //console.error(err);
         throw err;
       };
       strategy.success = function(user){
@@ -62,7 +64,7 @@ describe("StatelessGithubStrategy tests", function(){
           .matchHeader("authorization", "Basic " + CLIENT_TOKEN);
       });
       afterEach(function(){
-        stub.done();
+        nock.cleanAll();
       });
       it("should fail if header 'authorization' is missing", function(){
         (function(){
@@ -119,6 +121,19 @@ describe("StatelessGithubStrategy tests", function(){
           }
           strategy.authenticate({headers: {authorization: "Bearer token"}});
         });
+        it("should fail if verify returns false", function(done){
+          stub = stub.reply(200);
+          strategy.fail = function(){
+            done();
+          };
+          strategy.success = function(){
+            done("Expected error here");
+          };
+          strategy.verify = function(token, callback){
+            callback(null, false);
+          }
+          strategy.authenticate({headers: {authorization: "Bearer token"}});
+        });
         it("should fail and not call verify if token is invalid", function(done){
           stub = stub.reply(404);
           strategy.fail = function(){
@@ -130,6 +145,86 @@ describe("StatelessGithubStrategy tests", function(){
           };
 
           strategy.authenticate({headers: {authorization: "Bearer token"}});
+        });
+      });
+    });
+    describe("with userName and password", function(){
+      var stub;
+      beforeEach(function(){
+        stub = nock(Strategy.GITHUB)
+          .matchHeader("authorization", "Basic " + HASH)
+          .put(
+            "/authorizations/clients/" + CLIENT_ID,
+            {
+              client_secret: CLIENT_SECRET,
+              scopes: [ "read:org" ],
+            });
+      });
+      afterEach(function(){
+        stub.done();
+      });
+      it("should create new access token (code 200)", function(done){
+        stub = stub.reply(200, {token: TOKEN});
+        strategy.success = function(user){
+          user.token.should.equal(TOKEN);
+          done();
+        };
+        strategy.authenticate({}, {
+          userName: USERNAME,
+          password: PASSWORD,
+          options: {
+            scopes: [ "read:org" ]
+          }
+        });
+      });
+      it("should create new access token (code 201)", function(done){
+        stub = stub.reply(201, {token: TOKEN});
+        strategy.success = function(user){
+          user.token.should.equal(TOKEN);
+          done();
+        };
+        strategy.authenticate({}, {
+          userName: USERNAME,
+          password: PASSWORD,
+          options: {
+            scopes: [ "read:org" ]
+          }
+        });
+      });
+
+      it("should fail if github returns error (code 422)", function(done){
+        stub = stub.reply(422);
+        strategy.fail = function(err){
+          err.should.equal("Github seems to be configured with a bad client configuration.");
+          done();
+        };
+        strategy.success = function(){
+          done("Expected error here");
+        };
+        strategy.authenticate({}, {
+          userName: USERNAME,
+          password: PASSWORD,
+          options: {
+            scopes: [ "read:org" ]
+          }
+        });
+      });
+
+      it("should fail if github returns error (code 404)", function(done){
+        stub = stub.reply(404);
+        strategy.fail = function(err){
+          err.should.equal(404);
+          done();
+        };
+        strategy.success = function(){
+          done("Expected error here");
+        };
+        strategy.authenticate({}, {
+          userName: USERNAME,
+          password: PASSWORD,
+          options: {
+            scopes: [ "read:org" ]
+          }
         });
       });
     });
