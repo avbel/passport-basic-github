@@ -1,5 +1,6 @@
 var Strategy = require("../lib").Strategy;
 var nock = require("nock");
+var passport = require("passport");
 
 var CLIENT_ID     = "mock_client_id";
 var CLIENT_SECRET = "mock_client_secret";
@@ -226,6 +227,41 @@ describe("StatelessGithubStrategy tests", function(){
             scopes: [ "read:org" ]
           }
         });
+      });
+    });
+  });
+  describe("Using from passport", function(){
+    before(function(){
+      passport.use(new Strategy({clientId: CLIENT_ID, clientSecret: CLIENT_SECRET}));
+    });
+    afterEach(function(){
+      nock.cleanAll();
+    });
+
+    it("should create new access token", function(done){
+      nock(Strategy.GITHUB)
+        .matchHeader("authorization", "Basic " + HASH)
+        .put(
+          "/authorizations/clients/" + CLIENT_ID,
+          {
+            client_secret: CLIENT_SECRET,
+            scopes: [ "read:org" ],
+          }).reply(200, {token: TOKEN});
+      var req = {
+        logIn: function(user, options, callback){
+          user.token.should.equal(TOKEN);
+          callback();
+        }
+      };
+      passport.authenticate("stateless-github", {
+        userName: USERNAME,
+        password: PASSWORD,
+        options: {
+          scopes: [ "read:org" ]
+        }
+      })(req, {}, function(){
+        arguments.length.should.equal(0);
+        done();
       });
     });
   });
