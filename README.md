@@ -5,7 +5,7 @@
 
 
 [Passport](http://passportjs.org/) strategy for authenticating with [GitHub](https://github.com/)
-without using session.
+without using of session.
 
 This module lets you authenticate using GitHub in your Node.js applications via OAuth2 access token (to get is user name and password are required).
 It is usefull for webapi services which are not required any web ui.
@@ -31,7 +31,7 @@ specifying a client ID, client secret.
       function(accessToken,  done) { // optional callback
         // accessToken is valid access token from github
         // do any additional verification of accessToken here (checking membership, etc)
-        done();
+        done(); // you can pass additional user's data with done (like done(null, {isPowerUser: true}))
       }
     ));
 
@@ -57,7 +57,7 @@ application:
         userNameField: "username", //optional name of user name field in req.body (default: userName)
         passwordField: "pwd", //optional name of password field in req.body (default: password)
         //userName: "user", password: "123" // you can pass user name and password directly here if need
-        options: { //optional fields which are passed to https://api.github.com/authorizations/clients/GITHHUB_CLIENT_ID directly
+        options: { //optional fields which are passed to PUT https://api.github.com/authorizations/clients/GITHHUB_CLIENT_ID directly
           scopes: [ "read:org" ],
           note: "MyApp",
           note_url: "http://localhost"
