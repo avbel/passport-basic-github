@@ -1,5 +1,9 @@
 # Passport-Stateless-GitHub
 
+[![Build](https://travis-ci.org/avbel/passport-stateless-github.png)](https://travis-ci.org/avbel/passport-stateless-github)
+[![Dependencies](https://david-dm.org/avbel/passport-stateless-github.png)](https://david-dm.org/avbel/passport-stateless-github)
+
+
 [Passport](http://passportjs.org/) strategy for authenticating with [GitHub](https://github.com/)
 without using session.
 
