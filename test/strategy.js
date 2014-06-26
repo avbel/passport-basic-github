@@ -57,7 +57,7 @@ describe("StatelessGithubStrategy tests", function(){
         result = user;
       }
     });
-    describe("without userName and password", function(){
+    describe("check access token", function(){
       var stub;
       beforeEach(function(){
         stub = nock(Strategy.GITHUB)
@@ -78,7 +78,7 @@ describe("StatelessGithubStrategy tests", function(){
           user.token.should.equal(TOKEN);
           done();
         };
-        strategy.authenticate({headers: {authorization: "Bearer token"}});
+        strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
       });
       it("should fail if access token is invalid", function(done){
         stub = stub.reply(404);
@@ -88,7 +88,7 @@ describe("StatelessGithubStrategy tests", function(){
         strategy.success = function(){
           done("Expected error here");
         };
-        strategy.authenticate({headers: {authorization: "Bearer token"}});
+        strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
       });
       describe("with verify function", function(){
         var called;
@@ -107,7 +107,7 @@ describe("StatelessGithubStrategy tests", function(){
             called.should.be.true;
             done();
           };
-          strategy.authenticate({headers: {authorization: "Bearer token"}});
+          strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
         });
         it("should fail if verify returns error", function(done){
           stub = stub.reply(200);
@@ -120,7 +120,7 @@ describe("StatelessGithubStrategy tests", function(){
           strategy.verify = function(token, callback){
             callback(new Error("Something wrong here"));
           }
-          strategy.authenticate({headers: {authorization: "Bearer token"}});
+          strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
         });
         it("should fail if verify returns false", function(done){
           stub = stub.reply(200);
@@ -133,7 +133,7 @@ describe("StatelessGithubStrategy tests", function(){
           strategy.verify = function(token, callback){
             callback(null, false);
           }
-          strategy.authenticate({headers: {authorization: "Bearer token"}});
+          strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
         });
         it("should fail and not call verify if token is invalid", function(done){
           stub = stub.reply(404);
@@ -145,11 +145,11 @@ describe("StatelessGithubStrategy tests", function(){
             done("Expected error here");
           };
 
-          strategy.authenticate({headers: {authorization: "Bearer token"}});
+          strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
         });
       });
     });
-    describe("with userName and password", function(){
+    describe("require access token", function(){
       var stub;
       beforeEach(function(){
         stub = nock(Strategy.GITHUB)
@@ -171,6 +171,7 @@ describe("StatelessGithubStrategy tests", function(){
           done();
         };
         strategy.authenticate({}, {
+          requireAccessToken: true,
           userName: USERNAME,
           password: PASSWORD,
           options: {
@@ -185,8 +186,49 @@ describe("StatelessGithubStrategy tests", function(){
           done();
         };
         strategy.authenticate({}, {
+          requireAccessToken: true,
           userName: USERNAME,
           password: PASSWORD,
+          options: {
+            scopes: [ "read:org" ]
+          }
+        });
+      });
+
+      it("should create new access token (via request body)", function(done){
+        stub = stub.reply(200, {token: TOKEN});
+        strategy.success = function(user){
+          user.token.should.equal(TOKEN);
+          done();
+        };
+        strategy.authenticate({
+          body: {
+            userName: USERNAME,
+            password: PASSWORD,
+          }
+        }, {
+          requireAccessToken: true,
+          options: {
+            scopes: [ "read:org" ]
+          }
+        });
+      });
+
+      it("should create new access token (via request body with custom fields)", function(done){
+        stub = stub.reply(200, {token: TOKEN});
+        strategy.success = function(user){
+          user.token.should.equal(TOKEN);
+          done();
+        };
+        strategy.authenticate({
+          body: {
+            user: USERNAME,
+            pwd: PASSWORD,
+          }
+        }, {
+          requireAccessToken: true,
+          userNameField: "user",
+          passwordField: "pwd",
           options: {
             scopes: [ "read:org" ]
           }
@@ -203,6 +245,7 @@ describe("StatelessGithubStrategy tests", function(){
           done("Expected error here");
         };
         strategy.authenticate({}, {
+          requireAccessToken: true,
           userName: USERNAME,
           password: PASSWORD,
           options: {
@@ -221,6 +264,7 @@ describe("StatelessGithubStrategy tests", function(){
           done("Expected error here");
         };
         strategy.authenticate({}, {
+          requireAccessToken: true,
           userName: USERNAME,
           password: PASSWORD,
           options: {
@@ -254,12 +298,33 @@ describe("StatelessGithubStrategy tests", function(){
         }
       };
       passport.authenticate("stateless-github", {
+        requireAccessToken: true,
         userName: USERNAME,
         password: PASSWORD,
         options: {
           scopes: [ "read:org" ]
         }
       })(req, {}, function(){
+        arguments.length.should.equal(0);
+        done();
+      });
+    });
+
+    it("should verify access token", function(done){
+      nock(Strategy.GITHUB)
+        .get("/applications/" + CLIENT_ID + "/tokens/" + TOKEN)
+        .matchHeader("authorization", "Basic " + CLIENT_TOKEN)
+        .reply(200);
+      var req = {
+        headers: {
+          authorization: "Bearer " + TOKEN
+        },
+        logIn: function(user, options, callback){
+          user.token.should.equal(TOKEN);
+          callback();
+        }
+      };
+      passport.authenticate("stateless-github")(req, {}, function(){
         arguments.length.should.equal(0);
         done();
       });
