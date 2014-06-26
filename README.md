@@ -28,9 +28,9 @@ specifying a client ID, client secret.
         clientID: GITHUB_CLIENT_ID,
         clientSecret: GITHUB_CLIENT_SECRET,
       },
-      function(accessToken,  done) { // optional callback
+      function(userName, accessToken,  done) { // optional callback
         // accessToken is valid access token from github
-        // do any additional verification of accessToken here (checking membership, etc)
+        // do any additional verification here (checking membership, etc)
         done(); // you can pass additional user's data with done (like done(null, {isPowerUser: true}))
       }
     ));

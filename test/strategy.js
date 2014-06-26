@@ -95,14 +95,15 @@ describe("StatelessGithubStrategy tests", function(){
         var called;
         beforeEach(function(){
           called = false;
-          strategy.verify = function(token, callback){
+          strategy.verify = function(userName, token, callback){
+            userName.should.equal(USERNAME);
             token.should.equal(TOKEN);
             called = true;
             callback();
           };
         });
         it("should call verify function for accepted access token if need", function(done){
-          stub = stub.reply(200);
+          stub = stub.reply(200, {user: {login: USERNAME}});
           strategy.success = function(user){
             user.token.should.equal(TOKEN);
             called.should.be.true;
@@ -111,27 +112,27 @@ describe("StatelessGithubStrategy tests", function(){
           strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
         });
         it("should fail if verify returns error", function(done){
-          stub = stub.reply(200);
+          stub = stub.reply(200, {user: {login: USERNAME}});
           strategy.fail = function(){
             done();
           };
           strategy.success = function(){
             done("Expected error here");
           };
-          strategy.verify = function(token, callback){
+          strategy.verify = function(userName, token, callback){
             callback(new Error("Something wrong here"));
           }
           strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
         });
         it("should fail if verify returns false", function(done){
-          stub = stub.reply(200);
+          stub = stub.reply(200, {user: {login: USERNAME}});
           strategy.fail = function(){
             done();
           };
           strategy.success = function(){
             done("Expected error here");
           };
-          strategy.verify = function(token, callback){
+          strategy.verify = function(userName, token, callback){
             callback(null, false);
           }
           strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
