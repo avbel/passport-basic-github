@@ -73,9 +73,10 @@ describe("StatelessGithubStrategy tests", function(){
         }).should.throw();
       });
       it("should return success if access token is valid", function(done){
-        stub = stub.reply(200);
+        stub = stub.reply(200, {user: {login: USERNAME}});
         strategy.success = function(user){
           user.token.should.equal(TOKEN);
+          user.userName.should.equal(USERNAME);
           done();
         };
         strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
@@ -168,6 +169,7 @@ describe("StatelessGithubStrategy tests", function(){
         stub = stub.reply(200, {token: TOKEN});
         strategy.success = function(user){
           user.token.should.equal(TOKEN);
+          user.userName.should.equal(USERNAME);
           done();
         };
         strategy.authenticate({}, {
@@ -183,6 +185,7 @@ describe("StatelessGithubStrategy tests", function(){
         stub = stub.reply(201, {token: TOKEN});
         strategy.success = function(user){
           user.token.should.equal(TOKEN);
+          user.userName.should.equal(USERNAME);
           done();
         };
         strategy.authenticate({}, {
