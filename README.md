@@ -27,6 +27,7 @@ specifying a client ID, client secret.
     passport.use(new StatelessGithubStrategy({
         clientID: GITHUB_CLIENT_ID,
         clientSecret: GITHUB_CLIENT_SECRET,
+        accessTokenQueryField: "token" //optional query field with access token (default: 'access_token')
       },
       function(userName, accessToken,  done) { // optional callback
         // accessToken is valid access token from github

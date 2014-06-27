@@ -72,7 +72,7 @@ describe("StatelessGithubStrategy tests", function(){
           strategy.authenticate({});
         }).should.throw();
       });
-      it("should return success if access token is valid", function(done){
+      it("should return success if access token is valid (from header)", function(done){
         stub = stub.reply(200, {user: {login: USERNAME}});
         strategy.success = function(user){
           user.token.should.equal(TOKEN);
@@ -80,6 +80,15 @@ describe("StatelessGithubStrategy tests", function(){
           done();
         };
         strategy.authenticate({headers: {authorization: "Bearer " + TOKEN}});
+      });
+      it("should return success if access token is valid (from query)", function(done){
+        stub = stub.reply(200, {user: {login: USERNAME}});
+        strategy.success = function(user){
+          user.token.should.equal(TOKEN);
+          user.userName.should.equal(USERNAME);
+          done();
+        };
+        strategy.authenticate({headers: {}, query: {"access_token": TOKEN}});
       });
       it("should fail if access token is invalid", function(done){
         stub = stub.reply(404);
